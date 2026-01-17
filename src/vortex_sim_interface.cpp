@@ -9,10 +9,12 @@
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <vector>
 #include <vortex_msgs/msg/thruster_forces.hpp>
+#include <vortex_msgs/msg/sonar_info.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <stonefish_ros2/msg/dvl.hpp>
+#include <stonefish_ros2/msg/sonar_info.hpp>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/static_transform_broadcaster.h>
@@ -55,6 +57,14 @@ public:
         "/dvl/sim", qos_sensor_data,
         std::bind(&VortexSimInterface::dvl_callback, this,
                   std::placeholders::_1));
+
+    sonar_info_subscriber_ = this->create_subscription<stonefish_ros2::msg::SonarInfo>(
+        "/fls_publisher/sonar_info", qos_sensor_data,
+        std::bind(&VortexSimInterface::sonar_info_callback, this,
+                  std::placeholders::_1));
+
+    sonar_info_pub_ = this->create_publisher<vortex_msgs::msg::SonarInfo>(
+        "/orca/sonar_info", qos_sensor_data);
 
     depth_pub_ = this->create_publisher<std_msgs::msg::Float64>(
         "/dvl/altitude", qos_sensor_data);
@@ -112,6 +122,11 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr depth_pub_;
   rclcpp::Subscription<stonefish_ros2::msg::DVL>::SharedPtr dvl_subscriber_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
+
+  rclcpp::Subscription<stonefish_ros2::msg::SonarInfo>::SharedPtr
+      sonar_info_subscriber_;
+
+  rclcpp::Publisher<vortex_msgs::msg::SonarInfo>::SharedPtr sonar_info_pub_;
 
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
       pose_publisher_;
@@ -347,6 +362,22 @@ private:
     odom_ned_to_enu.transform.rotation.w = q1.w();
 
     world_enu_tf_pub_->sendTransform(odom_ned_to_enu);
+  }
+
+  void sonar_info_callback(
+      const stonefish_ros2::msg::SonarInfo::SharedPtr sonar_msg) {
+    vortex_msgs::msg::SonarInfo vortex_sonar_msg;
+
+    vortex_sonar_msg.header = sonar_msg->header;
+    vortex_sonar_msg.height = sonar_msg->height;
+    vortex_sonar_msg.width = sonar_msg->width;
+    vortex_sonar_msg.meters_per_pixel_x = sonar_msg->meters_per_pixel_x;
+    vortex_sonar_msg.meters_per_pixel_y = sonar_msg->meters_per_pixel_y;
+    vortex_sonar_msg.max_range = sonar_msg->max_range;
+    vortex_sonar_msg.min_range = sonar_msg->min_range;
+    vortex_sonar_msg.vertical_fov = sonar_msg->vertical_fov;
+
+    sonar_info_pub_->publish(vortex_sonar_msg);
   }
 };
 
