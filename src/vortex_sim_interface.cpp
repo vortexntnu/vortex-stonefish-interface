@@ -305,14 +305,14 @@ private:
 
     transform_stamped.header.stamp = this->get_clock()->now();
     transform_stamped.header.frame_id = "base_link";
-    transform_stamped.child_frame_id = "Orca/Multibeam2";
+    transform_stamped.child_frame_id = "Orca/FLS";
 
     transform_stamped.transform.translation.x = 0.45;
     transform_stamped.transform.translation.y = 0.0;
     transform_stamped.transform.translation.z = -0.1;
 
     tf2::Quaternion q;
-    q.setRPY(1.57, 0.0, 1.571);
+    q.setRPY(0.0, 0.0, 0.0);
     transform_stamped.transform.rotation.x = q.x();
     transform_stamped.transform.rotation.y = q.y();
     transform_stamped.transform.rotation.z = q.z();
